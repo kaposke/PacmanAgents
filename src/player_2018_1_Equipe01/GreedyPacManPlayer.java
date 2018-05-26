@@ -42,7 +42,7 @@ public class GreedyPacManPlayer extends DFSPacManPlayer {
 
             // Penalidade se ele quiser voltar (pra diminuir a ocorrencia de loops de vai e volta)
             if(move.getOpposite().equals(lastMove))
-                currentEvaluation *= 1.5f;
+                currentEvaluation -= Math.abs(currentEvaluation) * 0.9f;
 
             if(currentEvaluation > bestEvaluation) {
                 bestMove = move;
@@ -80,7 +80,7 @@ public class GreedyPacManPlayer extends DFSPacManPlayer {
          * **/
 //        double h = -dotsAmount - closestDotDistance + closestGhostDistance + mediumGhostsDistance;
 //        double h = -dotsAmount - closestDotDistance + closestGhostDistance;
-        double h = -dotsAmount * 1.5 - closestDotDistance * .5 + closestGhostDistance;
+        double h = -dotsAmount - closestDotDistance - mediumDotsDistance + closestGhostDistance;
 
         return h;
     }
