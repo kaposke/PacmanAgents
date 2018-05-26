@@ -13,8 +13,11 @@ import java.util.List;
 
 public class AStar {
 
-    public State getBestState(State start, int depth) {
-        Node startNode = new Node(start);
+    private Move previousMove = Move.NONE;
+    int currentDepth = 0;
+
+    public Move getBestMove(State start, int depth) {
+        Node startNode = new Node(start, previousMove);
         startNode.setG(0);
         startNode.setH(getHeuristic(startNode.getState()));
 
@@ -25,7 +28,9 @@ public class AStar {
 
         openSet.add(startNode);
 
-        int currentDepth = 0;
+        Node bestNode = new Node(start, Move.NONE);
+        System.out.println("StartNode F: " + startNode.getF());
+        currentDepth = 0;
         // Enquanto ainda ouverem nós não explorados
         while (!openSet.isEmpty()) {
             // Pega o nó com menor custo
@@ -34,25 +39,32 @@ public class AStar {
                 if (openSet.get(i).getF() < current.getF() || openSet.get(i).getF() == current.getF() && openSet.get(i).getH() < current.getH())
                     current = openSet.get(i);
             }
+            System.out.println("Current Node F:" + current.getF());
+            // Salvando o melhor de todos os loops
+            if (current != startNode)
+                if (current.getF() < bestNode.getF() || current.getF() == bestNode.getF() && current.getH() < bestNode.getH())
+                    bestNode = current;
+
+            // Checamos se o nó atual atinge o objetivo ou a profundidade maxima
+            if (Game.isWinning(bestNode.getState()) || currentDepth >= depth) { // TODO: ANALISE
+                List<Node> path = retracePath(startNode, bestNode);
+                // retorna o estado melhor proximo estado
+                previousMove = path.get(0).getMove();
+                System.out.println("A* Successful! Going: " + previousMove);
+                return previousMove;
+            }
+
             // Estamos explorando o nó com menor custo, então colocamos ele no closed
             openSet.remove(current);
             closedSet.add(current);
 
             currentDepth++;
-            // Checamos se o nó atual atinge o objetivo ou a profundidade maxima
-            if (Game.isWinning(current.getState()) || currentDepth >= depth) {
-                System.out.println("A* Successful!");
-                List<Node> path = retracePath(startNode, current);
-                // retorna o estado melhor proximo estado
-                return path.get(0).getState();
-            }
 
-            if(Game.isFinal(current.getState())) {
+            if (Game.isFinal(current.getState()))
                 break;
-            }
 
             // Vamos abrir o nó
-            for (Node child : getChildren(current)) { // Pega todos os estado seguintes possiveis
+            for (Node child : getChildren(current)) { // Pega todos os estados seguintes possiveis
                 // Se o nó já estiver explorado, ignoramos
                 if (closedSet.contains(child))
                     continue;
@@ -63,7 +75,7 @@ public class AStar {
         }
 
         System.out.println("Failed to find best Node.");
-        return start;
+        return Move.NONE;
     }
 
     private List<Node> retracePath(Node startNode, Node endNode) {
@@ -83,10 +95,14 @@ public class AStar {
         for (Move move : possibleMoves) {
             // Pega o proximo nó
             State nextState = Game.getNextState(current.getState(), move);
-            Node nextNode = new Node(nextState);
+            Node nextNode = new Node(nextState, move);
             // Calcula os custos do nó
+            double h = getHeuristic(nextState);
+            //Penalidade por voltar
+            if (move.getOpposite().equals(current.getMove()))
+                h = Math.abs(h) * 5;
+            nextNode.setH(h);
             nextNode.setG(current.getG() + 1);
-            nextNode.setH(getHeuristic(nextState));
             nextNode.setFather(current);
             // Adiciona á lista
             nodes.add(nextNode);
@@ -117,9 +133,7 @@ public class AStar {
          *     quanto mais longe os fantasmas melhor. Por isso "-closestGhostDistance"
          * Laroske <3
          * **/
-        double h = dotsAmount + closestDotDistance;
-
-        return h;
+        return dotsAmount * 3 + closestDotDistance + mediumDotsDistance * .1 - closestGhostDistance * .3;
     }
 
     private double getMediumDistance(Location pacman, List<Location> dots) {
