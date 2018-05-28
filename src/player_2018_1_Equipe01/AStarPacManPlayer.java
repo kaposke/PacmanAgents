@@ -5,11 +5,9 @@ import pacman.Move;
 import pacman.State;
 import player.DFSPacManPlayer;
 
-import java.util.List;
-
 public class AStarPacManPlayer extends DFSPacManPlayer {
 
-    private AStar aStar = new AStar();
+    private AStarSearch aStar = new AStarSearch();
     @Override
     public Move chooseMove(Game game) {
         State s = game.getCurrentState();
