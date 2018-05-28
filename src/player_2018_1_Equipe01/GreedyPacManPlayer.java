@@ -20,7 +20,7 @@ public class GreedyPacManPlayer extends DFSPacManPlayer {
         List<Move> legalMoves = game.getLegalPacManMoves();
 
         Move bestMove = legalMoves.get(0);
-        double bestEvaluation = Double.NEGATIVE_INFINITY;
+        double bestEvaluation = Double.POSITIVE_INFINITY;
 
         // Pega o melhor movimento (com o evaluateState() mais alto)
         for (Move move : legalMoves) {
@@ -42,9 +42,9 @@ public class GreedyPacManPlayer extends DFSPacManPlayer {
 
             // Penalidade se ele quiser voltar (pra diminuir a ocorrencia de loops de vai e volta)
             if(move.getOpposite().equals(lastMove))
-                currentEvaluation -= Math.abs(currentEvaluation) * 0.9f;
+                currentEvaluation += Math.abs(currentEvaluation) * 0.9f;
 
-            if(currentEvaluation > bestEvaluation) {
+            if(currentEvaluation < bestEvaluation) {
                 bestMove = move;
                 bestEvaluation = currentEvaluation;
             }
@@ -57,9 +57,9 @@ public class GreedyPacManPlayer extends DFSPacManPlayer {
     @Override
     public double evaluateState(State next) {
         if(Game.isLosing(next))
-            return Double.NEGATIVE_INFINITY;
-        if(Game.isWinning(next))
             return Double.POSITIVE_INFINITY;
+        if(Game.isWinning(next))
+            return Double.NEGATIVE_INFINITY;
 
         Location location = next.getPacManLocation();
 
@@ -71,16 +71,16 @@ public class GreedyPacManPlayer extends DFSPacManPlayer {
 
         /**
          * Heuristica
-         * Dica: Subtrair coisas que são <Quanto menor melhor>
-         *       Somar coisas que são <Quanto maior melhor>
-         * Ex: quanto menos pontos no mapa melhor. Por isso "-dotsAmount"
-         *     quanto mais longe os fantasmas melhor. Por isso "+closestGhostDistance"
+         * Dica: Subtrair coisas que são <Quanto maior melhor>
+         *       Somar coisas que são <Quanto menor melhor>
+         * Ex: quanto menos pontos no mapa melhor. Por isso "+dotsAmount"
+         *     quanto mais longe os fantasmas melhor. Por isso "-closestGhostDistance"
          * As multiplicações são um bom jeito de adicionar PESO aos fatores
          * Laroske <3
          * **/
 //        double h = -dotsAmount - closestDotDistance + closestGhostDistance + mediumGhostsDistance;
 //        double h = -dotsAmount - closestDotDistance + closestGhostDistance;
-        double h = -dotsAmount - closestDotDistance - mediumDotsDistance + closestGhostDistance;
+        double h = dotsAmount + closestDotDistance + mediumDotsDistance - closestGhostDistance;
 
         return h;
     }
